@@ -1,0 +1,64 @@
+version: "2.1"
+services:
+  validator:
+    image: hyperledger/sawtooth-validator:1.0
+    container_name: validator
+    expose:
+      - 4004
+    ports:
+      - 8800:8800
+    volumes:
+      - ./settings:/settings
+      - ./data:/var/lib/sawtooth
+    entrypoint: "bash -c \"\
+      cp /settings/validator.toml /etc/sawtooth/validator.toml && \
+      sawadm keygen && \
+      sawtooth-validator -vv \
+    \""
+    networks:
+      - sawtooth
+
+  settings-tp:
+    image: hyperledger/sawtooth-settings-tp:1.0
+    container_name: settings-tp
+    depends_on:
+      - validator
+    entrypoint: settings-tp -vv -C tcp://validator:4004
+    networks:
+     - sawtooth
+
+  poet-registry-tp:
+    image: hyperledger/sawtooth-poet-validator-registry-tp:1.0
+    container_name: poet-registry-tp
+    command: poet-validator-registry-tp -C tcp://validator:4004
+    networks:
+      - sawtooth
+
+  rest-api:
+    image: hyperledger/sawtooth-rest-api:1.0
+    container_name: rest-api
+    expose:
+      - 8008
+    ports:
+      - 8008:8008
+    entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
+    depends_on:
+      - validator
+    networks:
+      - sawtooth
+
+  shell:
+    image: hyperledger/sawtooth-all:1.0
+    container_name: shell
+    depends_on:
+      - rest-api
+    entrypoint: "bash -c \"\
+        sawtooth keygen && \
+        tail -f /dev/null \
+        \""
+    networks:
+      - sawtooth
+
+networks:
+  sawtooth:
+		name: sawtooth

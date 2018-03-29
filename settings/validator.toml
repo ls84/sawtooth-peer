@@ -1,0 +1,14 @@
+bind = [
+  "network:tcp://eth0:8800",
+  "component:tcp://eth0:4004"
+]
+
+peering = "dynamic"
+
+seeds = ["tcp://      :8800"]
+
+endpoint = "tcp://      :8800"
+
+scheduler = "parallel"
+
+minimum_peer_connectivity = 1
